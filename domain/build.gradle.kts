@@ -1,13 +1,26 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.serialization)
 }
 
-kotlin {
-    jvmToolchain(17)
+android {
+    namespace = "com.example.movieapp.domain"
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 }
 
 dependencies {
+    implementation(project(":core-common"))
+
+    implementation(libs.javax.inject)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
