@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.retrofit.core)
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging)
+    implementation(libs.okhttp.urlconnection)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit.kotlinx.serialization)
 
