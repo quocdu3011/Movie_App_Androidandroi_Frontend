@@ -10,6 +10,8 @@ import com.example.movieapp.domain.repository.CatalogRepository
 import com.example.movieapp.domain.repository.ProfileRepository
 import com.example.movieapp.domain.repository.StreamingRepository
 import com.example.movieapp.domain.repository.SubscriptionRepository
+import com.example.movieapp.data.store.InMemoryCurrentProfileStore
+import com.example.movieapp.domain.store.CurrentProfileStore
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -39,4 +41,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindStreamingRepository(impl: StreamingRepositoryImpl): StreamingRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCurrentProfileStore(impl: InMemoryCurrentProfileStore): CurrentProfileStore
 }
