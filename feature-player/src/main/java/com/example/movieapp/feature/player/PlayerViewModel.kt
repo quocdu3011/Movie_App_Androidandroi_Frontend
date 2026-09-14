@@ -96,16 +96,7 @@ class PlayerViewModel @Inject constructor(
 
             fetchMovieMetadata(movieId, playableId, resolvedProfileId)
 
-            val payloadKey = "$movieId|$playableId|$sourceItemId|$resolvedProfileId"
-            val existingPayloadKey = savedStateHandle.get<String>("sessionPayloadKey")
-            val idempotencyKey = if (existingPayloadKey == payloadKey) {
-                savedStateHandle.get<String>("sessionIdempotencyKey") ?: IdempotencyKeyGenerator.generate()
-            } else {
-                IdempotencyKeyGenerator.generate().also {
-                    savedStateHandle["sessionPayloadKey"] = payloadKey
-                    savedStateHandle["sessionIdempotencyKey"] = it
-                }
-            }
+            val idempotencyKey = IdempotencyKeyGenerator.generate()
 
             when (val result = createSessionUseCase(resolvedProfileId, movieId, playableId, sourceItemId, idempotencyKey)) {
                 is Result.Success -> {

@@ -146,11 +146,14 @@ class MovieDetailViewModel @Inject constructor(
     }
 
     private fun computeAvailableSources(detail: MovieDetail, playableId: String?): List<SourceItem> {
-        if (playableId == null) return emptyList()
-        return detail.sources.filter { source ->
-            source.playableId == playableId &&
-                    (source.sourceStatus in listOf("available", "unknown", "active") || source.sourceStatus.isBlank()) &&
-                    !source.sourceItemId.isNullOrBlank()
+        val validSources = detail.sources.filter { source ->
+            !source.sourceItemId.isNullOrBlank() &&
+                    (source.sourceStatus in listOf("available", "unknown", "active") || source.sourceStatus.isBlank())
         }
+        if (playableId == null) return validSources
+        val matched = validSources.filter { source ->
+            source.playableId == playableId || source.playableId.isNullOrBlank()
+        }
+        return if (matched.isNotEmpty()) matched else validSources
     }
 }
