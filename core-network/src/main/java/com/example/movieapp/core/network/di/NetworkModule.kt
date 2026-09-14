@@ -1,6 +1,7 @@
 package com.example.movieapp.core.network.di
 
 import android.content.Context
+import com.example.movieapp.core.network.NetworkConfig
 import com.example.movieapp.core.network.DeviceIdProvider
 import com.example.movieapp.core.network.EncryptedTokenStorage
 import com.example.movieapp.core.network.SharedCookieJarProvider
@@ -66,7 +67,7 @@ object NetworkModule {
     ): RefreshTokenApi {
         val contentType = "application/json".toMediaType()
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/")
+            .baseUrl(NetworkConfig.activeBaseUrl)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()

@@ -1,5 +1,6 @@
 package com.example.movieapp.data.di
 
+import com.example.movieapp.core.network.NetworkConfig
 import com.example.movieapp.core.network.di.BackendClient
 import com.example.movieapp.data.remote.api.AuthApi
 import com.example.movieapp.data.remote.api.CatalogApi
@@ -29,7 +30,7 @@ object DataNetworkModule {
     ): Retrofit {
         val contentType = "application/json".toMediaType()
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/")
+            .baseUrl(NetworkConfig.activeBaseUrl)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
