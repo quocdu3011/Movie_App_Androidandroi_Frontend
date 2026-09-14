@@ -18,6 +18,7 @@ android {
 
 dependencies {
     implementation(project(":core-common"))
+    implementation(project(":core-network"))
 
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.exoplayer.hls)
@@ -28,4 +29,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
