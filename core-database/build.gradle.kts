@@ -21,8 +21,11 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    annotationProcessor(libs.room.compiler)
 
     implementation(libs.hilt.android)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
