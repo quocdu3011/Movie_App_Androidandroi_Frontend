@@ -28,14 +28,33 @@ class BrowseMoviesUseCase @Inject constructor(
     private val catalogRepository: CatalogRepository
 ) {
     suspend operator fun invoke(
+        page: Int? = null,
+        pageSize: Int? = null,
+        q: String? = null,
+        genre: String? = null,
+        country: String? = null,
+        year: Int? = null,
         type: String? = null,
         contentKind: String? = null,
-        genreId: String? = null,
-        countryCode: String? = null,
-        page: Int = 1,
-        pageSize: Int = 20
+        sourceType: String? = null,
+        provider: String? = null,
+        sort: String? = null,
+        profileId: String? = null
     ): Result<List<Movie>> {
-        return catalogRepository.getMovies(type, contentKind, genreId, countryCode, page, pageSize)
+        return catalogRepository.getMovies(
+            page = page,
+            pageSize = pageSize,
+            q = q,
+            genre = genre,
+            country = country,
+            year = year,
+            type = type,
+            contentKind = contentKind,
+            sourceType = sourceType,
+            provider = provider,
+            sort = sort,
+            profileId = profileId
+        )
     }
 }
 

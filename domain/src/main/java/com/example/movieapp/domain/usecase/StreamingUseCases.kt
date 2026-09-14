@@ -42,11 +42,13 @@ class SendProgressUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         sessionId: String,
+        seq: String,
         positionSeconds: Int,
-        durationSeconds: Int
+        durationSeconds: Int? = null
     ): Result<PlaybackProgressAck> {
         return streamingRepository.sendProgress(
             sessionId = sessionId,
+            seq = seq,
             positionSeconds = positionSeconds,
             durationSeconds = durationSeconds
         )
@@ -58,10 +60,18 @@ class SendPlaybackEventUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         sessionId: String,
-        eventType: String,
-        eventData: String? = null
+        eventId: String,
+        type: String,
+        playedSeconds: Int? = null,
+        reasonCode: String? = null
     ): Result<PlaybackEventAck> {
-        return streamingRepository.sendEvent(sessionId, eventType, eventData)
+        return streamingRepository.sendEvent(
+            sessionId = sessionId,
+            eventId = eventId,
+            type = type,
+            playedSeconds = playedSeconds,
+            reasonCode = reasonCode
+        )
     }
 }
 

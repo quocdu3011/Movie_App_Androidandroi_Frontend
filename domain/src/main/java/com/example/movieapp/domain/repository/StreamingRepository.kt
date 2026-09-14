@@ -20,14 +20,17 @@ interface StreamingRepository {
 
     suspend fun sendProgress(
         sessionId: String,
+        seq: String,
         positionSeconds: Int,
-        durationSeconds: Int
+        durationSeconds: Int? = null
     ): Result<PlaybackProgressAck>
 
     suspend fun sendEvent(
         sessionId: String,
-        eventType: String,
-        eventData: String? = null
+        eventId: String,
+        type: String,
+        playedSeconds: Int? = null,
+        reasonCode: String? = null
     ): Result<PlaybackEventAck>
 
     suspend fun renewMediaAuth(sessionId: String): Result<MediaAuth>

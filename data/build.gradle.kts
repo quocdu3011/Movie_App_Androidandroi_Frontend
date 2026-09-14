@@ -24,6 +24,8 @@ dependencies {
     implementation(project(":core-database"))
 
     implementation(libs.retrofit.core)
+    implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.okhttp.core)
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.hilt.android)

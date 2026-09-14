@@ -10,12 +10,18 @@ interface CatalogRepository {
     suspend fun getPublicHome(pageSize: Int = 10): Result<CatalogHome>
     suspend fun getPersonalizedHome(profileId: String): Result<PersonalizedHome>
     suspend fun getMovies(
+        page: Int? = null,
+        pageSize: Int? = null,
+        q: String? = null,
+        genre: String? = null,
+        country: String? = null,
+        year: Int? = null,
         type: String? = null,
         contentKind: String? = null,
-        genreId: String? = null,
-        countryCode: String? = null,
-        page: Int = 1,
-        pageSize: Int = 20
+        sourceType: String? = null,
+        provider: String? = null,
+        sort: String? = null,
+        profileId: String? = null
     ): Result<List<Movie>>
     suspend fun search(
         q: String,
