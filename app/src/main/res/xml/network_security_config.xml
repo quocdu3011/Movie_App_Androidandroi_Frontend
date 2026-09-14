@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Default security config: HTTPS strictly required for production/staging -->
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

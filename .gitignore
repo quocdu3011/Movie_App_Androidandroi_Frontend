@@ -1,0 +1,57 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated build directories
+/build/
+**/build/
+bin/
+gen/
+out/
+
+# Gradle build cache & temporary files
+.gradle/
+.gradle-cache/
+.gradle_user_home/
+githooks/
+
+# Android Studio & IntelliJ IDEA files
+.idea/
+*.iml
+*.iws
+*.ipr
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local configuration files (contains local SDK paths, keys, secrets)
+local.properties
+
+# Signing files
+*.jks
+*.keystore
+*.pepk
+
+# Android SDK / Emulator local temporary dirs
+.android/
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
