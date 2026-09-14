@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.movieapp.core.ui.theme.MovieAppTheme
@@ -25,9 +26,9 @@ fun PrimaryButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(50.dp),
+            .height(52.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(26.dp), // Pill shape for modern buttons
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -37,16 +38,9 @@ fun PrimaryButton(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
-    }
-}
-
-@Preview(name = "Light Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO)
-@Composable
-private fun PrimaryButtonLightPreview() {
-    MovieAppTheme(darkTheme = false) {
-        PrimaryButton(text = "Đăng nhập", onClick = {})
     }
 }
 
@@ -54,6 +48,6 @@ private fun PrimaryButtonLightPreview() {
 @Composable
 private fun PrimaryButtonDarkPreview() {
     MovieAppTheme(darkTheme = true) {
-        PrimaryButton(text = "Đăng nhập", onClick = {})
+        PrimaryButton(text = "Đăng Nhập", onClick = {})
     }
 }

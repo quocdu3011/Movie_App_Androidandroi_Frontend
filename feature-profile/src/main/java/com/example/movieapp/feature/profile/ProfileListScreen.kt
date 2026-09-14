@@ -1,5 +1,6 @@
 package com.example.movieapp.feature.profile
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
@@ -32,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,10 +43,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.movieapp.core.ui.component.ErrorView
 import com.example.movieapp.core.ui.component.LoadingIndicator
+import com.example.movieapp.core.ui.theme.DarkBackground
+import com.example.movieapp.core.ui.theme.DarkSurface
+import com.example.movieapp.core.ui.theme.PrimaryCoral
+import com.example.movieapp.core.ui.theme.SecondaryGold
+import com.example.movieapp.core.ui.theme.TextPrimaryDark
+import com.example.movieapp.core.ui.theme.TextSecondaryDark
 import com.example.movieapp.domain.model.Profile
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,16 +71,30 @@ fun ProfileListScreen(
     var profileToDelete by remember { mutableStateOf<Profile?>(null) }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Danh sách hồ sơ") }
+                title = {
+                    Text(
+                        text = "Danh sách hồ sơ",
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimaryDark
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBackground
+                )
             )
         },
         floatingActionButton = {
             if (uiState is ProfileListUiState.Success) {
                 val profiles = (uiState as ProfileListUiState.Success).profiles
                 if (profiles.size < 5) {
-                    FloatingActionButton(onClick = onCreateProfileClick) {
+                    FloatingActionButton(
+                        onClick = onCreateProfileClick,
+                        containerColor = PrimaryCoral,
+                        contentColor = Color.White
+                    ) {
                         Icon(Icons.Default.Add, contentDescription = "Thêm hồ sơ")
                     }
                 }
@@ -78,6 +105,7 @@ fun ProfileListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(DarkBackground)
         ) {
             when (val state = uiState) {
                 is ProfileListUiState.Loading -> {
@@ -91,10 +119,10 @@ fun ProfileListScreen(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("Chưa có hồ sơ nào", style = MaterialTheme.typography.bodyLarge)
+                            Text("Chưa có hồ sơ nào", style = MaterialTheme.typography.bodyLarge, color = TextSecondaryDark)
                             Spacer(modifier = Modifier.height(16.dp))
                             TextButton(onClick = onCreateProfileClick) {
-                                Text("Tạo hồ sơ ngay")
+                                Text("Tạo hồ sơ ngay", color = PrimaryCoral, fontWeight = FontWeight.Bold)
                             }
                         }
                     } else {
@@ -134,8 +162,9 @@ fun ProfileListScreen(
     profileToDelete?.let { profile ->
         AlertDialog(
             onDismissRequest = { profileToDelete = null },
-            title = { Text("Xác nhận xóa") },
-            text = { Text("Bạn có chắc chắn muốn xóa hồ sơ \"${profile.name}\" không?") },
+            containerColor = DarkSurface,
+            title = { Text("Xác nhận xóa", color = TextPrimaryDark, fontWeight = FontWeight.Bold) },
+            text = { Text("Bạn có chắc chắn muốn xóa hồ sơ \"${profile.name}\" không?", color = TextSecondaryDark) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -143,12 +172,12 @@ fun ProfileListScreen(
                         profileToDelete = null
                     }
                 ) {
-                    Text("Xóa", color = MaterialTheme.colorScheme.error)
+                    Text("Xóa", color = PrimaryCoral, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { profileToDelete = null }) {
-                    Text("Hủy")
+                    Text("Hủy", color = TextSecondaryDark)
                 }
             }
         )
@@ -167,9 +196,9 @@ private fun ProfileCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onSelect),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = DarkSurface
         )
     ) {
         Row(
@@ -180,34 +209,49 @@ private fun ProfileCard(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // Large rounded square profile avatar (not round circle)
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (isActive) PrimaryCoral else DarkBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp),
+                        tint = if (isActive) Color.White else TextSecondaryDark
+                    )
+                }
+
                 Spacer(modifier = Modifier.width(16.dp))
+
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = profile.name,
-                            style = MaterialTheme.typography.titleMedium
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimaryDark
                         )
                         if (isActive) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Đang chọn",
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = PrimaryCoral,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                     if (profile.isKids) {
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Trẻ em (Kids)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary
+                            fontSize = 13.sp,
+                            color = SecondaryGold,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -215,12 +259,13 @@ private fun ProfileCard(
 
             Row {
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Chỉnh sửa")
+                    Icon(Icons.Default.Edit, contentDescription = "Chỉnh sửa", tint = TextSecondaryDark)
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Xóa", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Default.Delete, contentDescription = "Xóa", tint = PrimaryCoral.copy(alpha = 0.8f))
                 }
             }
         }
     }
 }
+

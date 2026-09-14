@@ -1,5 +1,6 @@
 package com.example.movieapp.feature.subscription
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Star
@@ -21,21 +23,30 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.movieapp.core.ui.component.ErrorView
 import com.example.movieapp.core.ui.component.LoadingIndicator
 import com.example.movieapp.core.ui.component.PrimaryButton
+import com.example.movieapp.core.ui.theme.DarkBackground
+import com.example.movieapp.core.ui.theme.DarkSurface
+import com.example.movieapp.core.ui.theme.PrimaryCoral
+import com.example.movieapp.core.ui.theme.SecondaryGold
+import com.example.movieapp.core.ui.theme.TextPrimaryDark
+import com.example.movieapp.core.ui.theme.TextSecondaryDark
 import com.example.movieapp.domain.model.Plan
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,9 +58,17 @@ fun PlansScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Đăng ký gói xem phim") }
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground),
+                title = {
+                    Text(
+                        text = "Đăng ký gói Premium",
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimaryDark
+                    )
+                }
             )
         }
     ) { paddingValues ->
@@ -57,6 +76,7 @@ fun PlansScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(DarkBackground)
         ) {
             when (val state = uiState) {
                 is SubscriptionUiState.Loading -> {
@@ -72,9 +92,8 @@ fun PlansScreen(
                         state.currentSubscription?.let { sub ->
                             if (sub.status == "active") {
                                 Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                                    ),
+                                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                                    shape = RoundedCornerShape(16.dp),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 16.dp)
@@ -86,17 +105,20 @@ fun PlansScreen(
                                         Icon(
                                             Icons.Default.CheckCircle,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary
+                                            tint = SecondaryGold
                                         )
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Column {
                                             Text(
                                                 "Gói hiện tại: ${sub.plan?.name ?: "Đang hoạt động"}",
-                                                style = MaterialTheme.typography.titleMedium
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = TextPrimaryDark
                                             )
                                             Text(
                                                 "Hạn sử dụng: ${sub.endAt}",
-                                                style = MaterialTheme.typography.bodySmall
+                                                fontSize = 13.sp,
+                                                color = TextSecondaryDark
                                             )
                                         }
                                     }
@@ -104,7 +126,12 @@ fun PlansScreen(
                             }
                         }
 
-                        Text("Chọn gói dịch vụ", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            text = "Chọn gói dịch vụ",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimaryDark
+                        )
                         Spacer(modifier = Modifier.height(12.dp))
 
                         LazyColumn(
@@ -122,7 +149,12 @@ fun PlansScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text("Phương thức thanh toán", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "Phương thức thanh toán",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimaryDark
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
 
                         val paymentMethods = listOf(
@@ -141,9 +173,10 @@ fun PlansScreen(
                             ) {
                                 RadioButton(
                                     selected = state.selectedPaymentMethod == code,
-                                    onClick = { viewModel.selectPaymentMethod(code) }
+                                    onClick = { viewModel.selectPaymentMethod(code) },
+                                    colors = RadioButtonDefaults.colors(selectedColor = PrimaryCoral, unselectedColor = TextSecondaryDark)
                                 )
-                                Text(label, style = MaterialTheme.typography.bodyMedium)
+                                Text(label, fontSize = 14.sp, color = TextPrimaryDark)
                             }
                         }
 
@@ -166,17 +199,19 @@ fun PlansScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.height(64.dp))
+                        CircularProgressIndicator(modifier = Modifier.height(64.dp), color = PrimaryCoral)
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
                             text = "Đang xử lý thanh toán...",
-                            style = MaterialTheme.typography.titleMedium
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimaryDark
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Vui lòng chờ trong giây lát (${state.attemptCount}/24)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            fontSize = 13.sp,
+                            color = TextSecondaryDark
                         )
                     }
                 }
@@ -192,13 +227,15 @@ fun PlansScreen(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = SecondaryGold,
                             modifier = Modifier.height(72.dp)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = "Đăng ký gói thành công!",
-                            style = MaterialTheme.typography.titleLarge
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimaryDark
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         PrimaryButton(
@@ -219,8 +256,9 @@ fun PlansScreen(
                     ) {
                         Text(
                             text = state.message,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.error
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryCoral
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         PrimaryButton(
@@ -253,9 +291,9 @@ private fun PlanCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onSelect),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = DarkSurface
         )
     ) {
         Row(
@@ -269,22 +307,30 @@ private fun PlanCard(
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
-                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (isSelected) SecondaryGold else TextSecondaryDark
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(plan.name, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "${plan.durationDays} ngày • Tối đa ${plan.maxConcurrentStreams} luồng • ${plan.maxResolution}",
-                        style = MaterialTheme.typography.bodySmall
+                        text = plan.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimaryDark
+                    )
+                    Text(
+                        text = "${plan.durationDays} ngày • Tối đa ${plan.maxConcurrentStreams} luồng • ${plan.maxResolution}",
+                        fontSize = 13.sp,
+                        color = TextSecondaryDark
                     )
                 }
             }
             Text(
-                "${plan.price} ${plan.currency}",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary
+                text = "${plan.price} ${plan.currency}",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = PrimaryCoral
             )
         }
     }
 }
+

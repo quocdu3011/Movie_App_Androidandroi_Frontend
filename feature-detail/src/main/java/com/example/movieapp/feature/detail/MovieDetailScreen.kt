@@ -4,8 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,17 +16,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,20 +36,23 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.movieapp.core.ui.component.ErrorView
 import com.example.movieapp.core.ui.component.LoadingIndicator
-import com.example.movieapp.core.ui.component.PrimaryButton
-import com.example.movieapp.domain.model.MovieDetail
-import com.example.movieapp.domain.model.PlayableItem
-import com.example.movieapp.domain.model.SourceItem
+import com.example.movieapp.core.ui.theme.DarkBackground
+import com.example.movieapp.core.ui.theme.DarkSurface
+import com.example.movieapp.core.ui.theme.PrimaryCoral
+import com.example.movieapp.core.ui.theme.SecondaryGold
+import com.example.movieapp.core.ui.theme.TextPrimaryDark
+import com.example.movieapp.core.ui.theme.TextSecondaryDark
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MovieDetailScreen(
     movieId: String,
@@ -66,7 +69,7 @@ fun MovieDetailScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(DarkBackground)
     ) {
         if (uiState.isLoading) {
             LoadingIndicator()
@@ -79,18 +82,23 @@ fun MovieDetailScreen(
         } else if (uiState.movieDetail != null) {
             val detail = uiState.movieDetail!!
             val movie = detail.movie
+            val selectedPlayable = uiState.selectedPlayableItem
+            val selectedSource = uiState.selectedSourceItem
+            val sourceItemId = selectedSource?.sourceItemId
+            val canPlay = selectedPlayable != null &&
+                    selectedSource != null &&
+                    !sourceItemId.isNullOrBlank()
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-                // Backdrop Image
+                // Backdrop Image with Gradient Overlay
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(220.dp)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .height(300.dp)
                     ) {
                         if (!movie.backdropUrl.isNullOrBlank()) {
                             AsyncImage(
@@ -99,82 +107,143 @@ fun MovieDetailScreen(
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(DarkSurface)
+                            )
+                        }
+
+                        // Gradient fading into DarkBackground
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            DarkBackground.copy(alpha = 0.6f),
+                                            DarkBackground
+                                        )
+                                    )
+                                )
+                        )
+
+                        // Favorite Button on top right
+                        IconButton(
+                            onClick = { viewModel.toggleFavorite() },
+                            enabled = profileId != null,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(16.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (uiState.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Yêu thích",
+                                tint = if (uiState.isFavorite) PrimaryCoral else TextPrimaryDark
+                            )
+                        }
+
+                        // Floating Circular Play Button
+                        if (canPlay && sourceItemId != null) {
+                            FloatingActionButton(
+                                onClick = {
+                                    onPlayClick(
+                                        movie.id,
+                                        selectedPlayable!!.id,
+                                        sourceItemId,
+                                        profileId
+                                    )
+                                },
+                                shape = CircleShape,
+                                containerColor = PrimaryCoral,
+                                contentColor = Color.White,
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(end = 20.dp, bottom = 10.dp)
+                                    .size(56.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Phát phim",
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
                         }
                     }
                 }
 
                 // Title & Basic Info Section
                 item {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = movie.title,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            IconButton(
-                                onClick = { viewModel.toggleFavorite() },
-                                enabled = profileId != null
-                            ) {
-                                Icon(
-                                    imageVector = if (uiState.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                    contentDescription = "Yêu thích",
-                                    tint = if (uiState.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        Text(
+                            text = movie.title,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimaryDark,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
                         if (!movie.originTitle.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = movie.originTitle!!,
                                 fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                                color = TextSecondaryDark
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            movie.releaseYear?.let { year ->
+                            if (movie.averageRating > 0) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = SecondaryGold,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = year.toString(),
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.SemiBold
+                                    text = String.format("%.1f", movie.averageRating),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimaryDark
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                             }
 
-                            Text(
-                                text = "⭐ ${String.format("%.1f", movie.averageRating)}",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
+                            movie.releaseYear?.let { year ->
+                                Text(
+                                    text = year.toString(),
+                                    fontSize = 14.sp,
+                                    color = TextSecondaryDark,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                            }
 
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Text(
-                                text = movie.accessTier.uppercase(),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
+                            if (movie.accessTier.isNotBlank()) {
+                                val isPremium = movie.accessTier.lowercase() == "vip" || movie.accessTier.lowercase() == "premium"
+                                Text(
+                                    text = if (isPremium) "Premium" else "Miễn phí",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isPremium) SecondaryGold else PrimaryCoral
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
                         if (!movie.description.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(14.dp))
                             Text(
                                 text = movie.description!!,
                                 fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onBackground
+                                color = TextSecondaryDark,
+                                lineHeight = 20.sp
                             )
                         }
                     }
@@ -189,23 +258,34 @@ fun MovieDetailScreen(
 
                     if (seasons.isNotEmpty()) {
                         item {
+                            Spacer(modifier = Modifier.height(20.dp))
                             Text(
                                 text = "Chọn mùa",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                color = TextPrimaryDark,
+                                modifier = Modifier.padding(horizontal = 16.dp)
                             )
 
-                            ScrollableTabRow(
-                                selectedTabIndex = seasons.indexOf(uiState.selectedSeasonNumber).coerceAtLeast(0),
-                                edgePadding = 16.dp
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                seasons.forEach { seasonNumber ->
-                                    Tab(
-                                        selected = uiState.selectedSeasonNumber == seasonNumber,
+                                items(seasons) { seasonNumber ->
+                                    val isSelected = uiState.selectedSeasonNumber == seasonNumber
+                                    FilterChip(
+                                        selected = isSelected,
                                         onClick = { viewModel.selectSeason(seasonNumber) },
-                                        text = { Text("Mùa $seasonNumber") }
+                                        shape = RoundedCornerShape(50),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = PrimaryCoral,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = DarkSurface,
+                                            labelColor = TextSecondaryDark
+                                        ),
+                                        label = { Text("Mùa $seasonNumber") }
                                     )
                                 }
                             }
@@ -217,23 +297,33 @@ fun MovieDetailScreen(
                             .sortedBy { it.sortOrder }
 
                         item {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = "Danh sách tập",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                color = TextPrimaryDark,
+                                modifier = Modifier.padding(horizontal = 16.dp)
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
 
                             LazyRow(
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 items(currentSeasonPlayables) { playable ->
+                                    val isSelected = uiState.selectedPlayableItem?.id == playable.id
                                     FilterChip(
-                                        selected = uiState.selectedPlayableItem?.id == playable.id,
+                                        selected = isSelected,
                                         onClick = { viewModel.selectPlayableItem(playable) },
+                                        shape = RoundedCornerShape(50),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = PrimaryCoral,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = DarkSurface,
+                                            labelColor = TextSecondaryDark
+                                        ),
                                         label = { Text(playable.label.ifBlank { "Tập ${playable.episodeNumber ?: playable.sortOrder}" }) }
                                     )
                                 }
@@ -244,20 +334,22 @@ fun MovieDetailScreen(
 
                 // Source/Server Selector
                 item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Text(
                         text = "Chọn nguồn phát (Server)",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        color = TextPrimaryDark,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     if (uiState.availableSources.isEmpty()) {
                         Text(
                             text = "Chưa có nguồn phát khả dụng cho tập này.",
                             fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.error,
+                            color = TextSecondaryDark,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     } else {
@@ -267,44 +359,25 @@ fun MovieDetailScreen(
                         ) {
                             items(uiState.availableSources) { source ->
                                 val label = source.serverLabel ?: source.serverKey ?: "Server"
+                                val isSelected = uiState.selectedSourceItem?.id == source.id
                                 FilterChip(
-                                    selected = uiState.selectedSourceItem?.id == source.id,
+                                    selected = isSelected,
                                     onClick = { viewModel.selectSourceItem(source) },
+                                    shape = RoundedCornerShape(50),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = PrimaryCoral,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = DarkSurface,
+                                        labelColor = TextSecondaryDark
+                                    ),
                                     label = { Text(label) }
                                 )
                             }
                         }
                     }
                 }
-
-                // Play Button
-                item {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    val selectedPlayable = uiState.selectedPlayableItem
-                    val selectedSource = uiState.selectedSourceItem
-                    val canPlay = selectedPlayable != null &&
-                            selectedSource != null &&
-                            !selectedSource.sourceItemId.isNullOrBlank()
-
-                    PrimaryButton(
-                        text = "Phát Phim",
-                        onClick = {
-                            if (canPlay) {
-                                onPlayClick(
-                                    movie.id,
-                                    selectedPlayable!!.id,
-                                    selectedSource!!.sourceItemId!!,
-                                    profileId
-                                )
-                            }
-                        },
-                        enabled = canPlay,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    )
-                }
             }
         }
     }
 }
+

@@ -1,5 +1,6 @@
 package com.example.movieapp.feature.search
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,22 +19,26 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,13 +46,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.movieapp.core.ui.component.ErrorView
 import com.example.movieapp.core.ui.component.LoadingIndicator
 import com.example.movieapp.core.ui.component.MovieCard
+import com.example.movieapp.core.ui.theme.DarkBackground
+import com.example.movieapp.core.ui.theme.DarkSurface
+import com.example.movieapp.core.ui.theme.PrimaryCoral
+import com.example.movieapp.core.ui.theme.TextPrimaryDark
+import com.example.movieapp.core.ui.theme.TextSecondaryDark
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     onMovieClick: (String) -> Unit,
@@ -69,22 +82,33 @@ fun SearchScreen(
     }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground),
                 title = {
                     OutlinedTextField(
                         value = query,
                         onValueChange = viewModel::onQueryChanged,
-                        placeholder = { Text("Tìm kiếm phim...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        placeholder = { Text("Tìm kiếm phim...", color = TextSecondaryDark) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondaryDark) },
                         trailingIcon = {
                             if (query.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.onQueryChanged("") }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Xóa")
+                                    Icon(Icons.Default.Clear, contentDescription = "Xóa", tint = TextSecondaryDark)
                                 }
                             }
                         },
                         singleLine = true,
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = DarkSurface,
+                            unfocusedContainerColor = DarkSurface,
+                            focusedBorderColor = PrimaryCoral,
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedTextColor = TextPrimaryDark,
+                            unfocusedTextColor = TextPrimaryDark
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(end = 8.dp)
@@ -97,6 +121,7 @@ fun SearchScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(DarkBackground)
         ) {
             FilterRow(
                 filter = filter,
@@ -106,7 +131,11 @@ fun SearchScreen(
             when (val state = uiState) {
                 is SearchUiState.Idle -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Nhập từ khóa hoặc chọn bộ lọc để tìm kiếm", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = "Nhập từ khóa hoặc chọn bộ lọc để tìm kiếm",
+                            fontSize = 14.sp,
+                            color = TextSecondaryDark
+                        )
                     }
                 }
 
@@ -126,7 +155,11 @@ fun SearchScreen(
                 is SearchUiState.Success -> {
                     if (state.movies.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Không tìm thấy kết quả phù hợp", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                text = "Không tìm thấy kết quả phù hợp",
+                                fontSize = 14.sp,
+                                color = TextSecondaryDark
+                            )
                         }
                     } else {
                         LazyVerticalGrid(
@@ -141,6 +174,7 @@ fun SearchScreen(
                                 MovieCard(
                                     title = movie.title,
                                     posterUrl = movie.posterUrl,
+                                    rating = movie.averageRating,
                                     onClick = { onMovieClick(movie.id) }
                                 )
                             }
@@ -153,7 +187,7 @@ fun SearchScreen(
                                             .padding(16.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        CircularProgressIndicator()
+                                        CircularProgressIndicator(color = PrimaryCoral)
                                     }
                                 }
                             }
@@ -185,14 +219,22 @@ private fun FilterRow(
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        val types = listOf(null to "Tất cả loại", "movie" to "Phim lẻ", "series" to "Phim bộ")
+        val types = listOf(null to "Tất cả", "movie" to "Phim lẻ", "series" to "Phim bộ")
         types.forEach { (typeVal, label) ->
-            InputChip(
-                selected = filter.type == typeVal,
+            val isSelected = filter.type == typeVal
+            FilterChip(
+                selected = isSelected,
                 onClick = { onFilterChanged(filter.copy(type = if (filter.type == typeVal) null else typeVal)) },
+                shape = RoundedCornerShape(50),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = PrimaryCoral,
+                    selectedLabelColor = Color.White,
+                    containerColor = DarkSurface,
+                    labelColor = TextSecondaryDark
+                ),
                 label = { Text(label) }
             )
         }
@@ -218,21 +260,26 @@ private fun SearchHistorySection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Search, contentDescription = null)
+                Icon(Icons.Default.Search, contentDescription = null, tint = PrimaryCoral)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Lịch sử tìm kiếm", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = "Lịch sử tìm kiếm",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimaryDark
+                )
             }
             if (queries.isNotEmpty()) {
                 TextButton(onClick = onClearAll) {
-                    Text("Xóa tất cả")
+                    Text("Xóa tất cả", color = PrimaryCoral)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         if (queries.isEmpty()) {
-            Text("Chưa có lịch sử tìm kiếm", style = MaterialTheme.typography.bodyMedium)
+            Text("Chưa có lịch sử tìm kiếm", fontSize = 14.sp, color = TextSecondaryDark)
         } else {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -241,12 +288,17 @@ private fun SearchHistorySection(
                 queries.forEach { item ->
                     AssistChip(
                         onClick = { onQueryClick(item) },
-                        label = { Text(item) },
+                        label = { Text(item, color = TextPrimaryDark) },
+                        shape = RoundedCornerShape(50),
+                        colors = AssistChipDefaults.assistChipColors(containerColor = DarkSurface),
                         trailingIcon = {
                             Icon(
                                 Icons.Default.Close,
                                 contentDescription = "Xóa mục",
-                                modifier = Modifier.clickable { onRemoveQuery(item) }
+                                tint = TextSecondaryDark,
+                                modifier = Modifier
+                                    .clickable { onRemoveQuery(item) }
+                                    .padding(2.dp)
                             )
                         }
                     )
@@ -255,3 +307,4 @@ private fun SearchHistorySection(
         }
     }
 }
+

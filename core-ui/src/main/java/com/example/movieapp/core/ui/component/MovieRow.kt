@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.movieapp.core.ui.theme.MovieAppTheme
@@ -22,6 +23,7 @@ data class MovieItemUiModel(
     val id: String,
     val title: String,
     val posterUrl: String?,
+    val rating: Double? = null,
     val progressPercent: Float? = null
 )
 
@@ -40,20 +42,23 @@ fun MovieRow(
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
+        // Peek scrolling: 16dp start padding, items spaced by 12dp, end padding 24dp
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(movies, key = { it.id }) { movie ->
                 MovieCard(
                     title = movie.title,
                     posterUrl = movie.posterUrl,
+                    rating = movie.rating,
                     progressPercent = movie.progressPercent,
                     onClick = { onMovieClick(movie) }
                 )
@@ -62,30 +67,13 @@ fun MovieRow(
     }
 }
 
-@Preview(name = "Light Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO)
-@Composable
-private fun MovieRowLightPreview() {
-    val sampleMovies = listOf(
-        MovieItemUiModel("1", "Phim 1", null, 0.4f),
-        MovieItemUiModel("2", "Phim 2", null),
-        MovieItemUiModel("3", "Phim 3", null, 0.8f)
-    )
-    MovieAppTheme(darkTheme = false) {
-        MovieRow(
-            title = "Phim Thịnh Hành",
-            movies = sampleMovies,
-            onMovieClick = {}
-        )
-    }
-}
-
 @Preview(name = "Dark Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun MovieRowDarkPreview() {
     val sampleMovies = listOf(
-        MovieItemUiModel("1", "Phim 1", null, 0.4f),
-        MovieItemUiModel("2", "Phim 2", null),
-        MovieItemUiModel("3", "Phim 3", null, 0.8f)
+        MovieItemUiModel("1", "Phim 1", null, 8.5, 0.4f),
+        MovieItemUiModel("2", "Phim 2", null, 9.0),
+        MovieItemUiModel("3", "Phim 3", null, 7.8, 0.8f)
     )
     MovieAppTheme(darkTheme = true) {
         MovieRow(

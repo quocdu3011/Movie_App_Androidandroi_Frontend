@@ -55,7 +55,7 @@ class ResultTest {
         }
         assertTrue(onErrorCalled)
 
-        val mapped = result.map { it.length }
+        val mapped = result.map { str: String -> str.length }
         assertTrue(mapped is Result.Error)
         assertEquals("NETWORK_ERROR", (mapped as Result.Error).code)
     }

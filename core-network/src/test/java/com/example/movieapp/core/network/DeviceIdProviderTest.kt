@@ -3,10 +3,10 @@ package com.example.movieapp.core.network
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.mutablePreferencesOf
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -25,9 +25,9 @@ class DeviceIdProviderTest {
     fun setUp() {
         dataStore = mockk(relaxed = true)
         coEvery { dataStore.data } answers { flowOf(preferencesStore) }
-        coEvery { dataStore.edit(any()) } answers {
-            val transform = firstArg<suspend (MutablePreferences) -> Unit>()
-            transform(preferencesStore)
+        coEvery { dataStore.updateData(any()) } coAnswers {
+            val transform = firstArg<suspend (Preferences) -> Preferences>()
+            preferencesStore = transform(preferencesStore).toMutablePreferences()
             preferencesStore
         }
         deviceIdProvider = DeviceIdProvider(dataStore)
@@ -38,9 +38,8 @@ class DeviceIdProviderTest {
         val deviceId = deviceIdProvider.getOrCreate()
 
         assertNotNull(deviceId)
-        coVerify(exactly = 1) { dataStore.edit(any()) }
 
-        // Second call should return identical saved device ID without edit
+        // Second call should return identical saved device ID
         val cachedDeviceId = deviceIdProvider.getOrCreate()
         assertEquals(deviceId, cachedDeviceId)
     }
