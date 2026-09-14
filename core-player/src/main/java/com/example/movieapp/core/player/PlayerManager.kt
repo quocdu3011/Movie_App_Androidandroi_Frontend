@@ -80,6 +80,20 @@ class PlayerManager @Inject constructor(
         exoPlayer?.seekTo(positionMs)
     }
 
+    fun seekBy(deltaMs: Long) {
+        val player = exoPlayer ?: return
+        val newPos = (player.currentPosition + deltaMs).coerceIn(0L, player.duration.coerceAtLeast(0L))
+        player.seekTo(newPos)
+    }
+
+    fun setPlaybackSpeed(speed: Float) {
+        exoPlayer?.playbackParameters = androidx.media3.common.PlaybackParameters(speed)
+    }
+
+    fun getPlaybackSpeed(): Float {
+        return exoPlayer?.playbackParameters?.speed ?: 1.0f
+    }
+
     fun release() {
         exoPlayer?.removeListener(listener)
         exoPlayer?.release()

@@ -11,6 +11,7 @@ import com.example.movieapp.domain.model.PlaybackProgressAck
 import com.example.movieapp.domain.model.PlaybackSession
 import com.example.movieapp.domain.store.CurrentProfileStore
 import com.example.movieapp.domain.usecase.CreatePlaybackSessionUseCase
+import com.example.movieapp.domain.usecase.GetMovieDetailUseCase
 import com.example.movieapp.domain.usecase.GetProfilesUseCase
 import com.example.movieapp.domain.usecase.RenewMediaAuthUseCase
 import com.example.movieapp.domain.usecase.SendHeartbeatUseCase
@@ -55,6 +56,7 @@ class PlayerViewModelTest {
         every { currentProfileId } returns MutableStateFlow("550e8400-e29b-41d4-a716-446655440000")
     }
     private val getProfilesUseCase = mockk<GetProfilesUseCase>(relaxed = true)
+    private val getMovieDetailUseCase = mockk<GetMovieDetailUseCase>(relaxed = true)
 
     private lateinit var viewModel: PlayerViewModel
 
@@ -89,7 +91,7 @@ class PlayerViewModelTest {
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
             heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
-            currentProfileStore, getProfilesUseCase
+            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase
         )
         viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()
@@ -110,7 +112,7 @@ class PlayerViewModelTest {
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
             heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
-            currentProfileStore, getProfilesUseCase
+            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase
         )
         viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()
@@ -147,7 +149,7 @@ class PlayerViewModelTest {
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
             heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
-            currentProfileStore, getProfilesUseCase
+            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase
         )
         viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()

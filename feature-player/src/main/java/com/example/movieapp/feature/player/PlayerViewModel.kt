@@ -29,6 +29,8 @@ import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 
+import com.example.movieapp.domain.usecase.GetMovieDetailUseCase
+
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
@@ -39,7 +41,8 @@ class PlayerViewModel @Inject constructor(
     private val eventUseCase: SendPlaybackEventUseCase,
     private val renewMediaAuthUseCase: RenewMediaAuthUseCase,
     private val currentProfileStore: CurrentProfileStore,
-    private val getProfilesUseCase: GetProfilesUseCase
+    private val getProfilesUseCase: GetProfilesUseCase,
+    private val getMovieDetailUseCase: GetMovieDetailUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -90,6 +93,8 @@ class PlayerViewModel @Inject constructor(
                     else -> {}
                 }
             }
+
+            fetchMovieMetadata(movieId, playableId, resolvedProfileId)
 
             val payloadKey = "$movieId|$playableId|$sourceItemId|$resolvedProfileId"
             val existingPayloadKey = savedStateHandle.get<String>("sessionPayloadKey")
@@ -321,6 +326,46 @@ class PlayerViewModel @Inject constructor(
                 canRetryManually = error.code == "IDEMPOTENCY_KEY_REUSED"
             )
         }
+    }
+
+    private fun fetchMovieMetadata(movieId: String, playableId: String, profileId: String) {
+        viewModelScope.launch {
+            when (val result = getMovieDetailUseCase(movieId, profileId)) {
+                is Result.Success -> {
+                    val detail = result.data
+                    val sortedItems = detail.playableItems.sortedBy { it.sortOrder }
+                    val idx = sortedItems.indexOfFirst { it.id == playableId }
+                    val currentItem = if (idx >= 0) sortedItems[idx] else null
+                    val prev = if (idx > 0) sortedItems[idx - 1] else null
+                    val next = if (idx >= 0 && idx < sortedItems.size - 1) sortedItems[idx + 1] else null
+
+                    _uiState.update {
+                        it.copy(
+                            movieTitle = detail.movie.title,
+                            episodeTitle = currentItem?.label ?: "",
+                            playableItems = sortedItems,
+                            currentPlayableId = playableId,
+                            previousPlayableItem = prev,
+                            nextPlayableItem = next
+                        )
+                    }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun setSpeed(speed: Float) {
+        playerManager.setPlaybackSpeed(speed)
+        _uiState.update { it.copy(currentSpeed = speed) }
+    }
+
+    fun setQuality(quality: String) {
+        _uiState.update { it.copy(currentQuality = quality) }
+    }
+
+    fun seekRelative(deltaMs: Long) {
+        playerManager.seekBy(deltaMs)
     }
 
     override fun onCleared() {

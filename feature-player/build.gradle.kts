@@ -23,6 +23,14 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll(
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+        )
+    }
+}
+
 dependencies {
     implementation(project(":domain"))
     implementation(project(":core-ui"))
