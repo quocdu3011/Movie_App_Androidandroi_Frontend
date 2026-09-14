@@ -36,7 +36,7 @@ class MovieDetailViewModel @Inject constructor(
         val profileId = currentProfileStore.currentProfileId.value
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, profileId = profileId, errorMessage = null) }
 
             // Check favorite if profileId is present
             if (profileId != null) {

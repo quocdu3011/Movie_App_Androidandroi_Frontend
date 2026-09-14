@@ -9,7 +9,9 @@ import com.example.movieapp.domain.model.PlaybackEventAck
 import com.example.movieapp.domain.model.PlaybackHeartbeat
 import com.example.movieapp.domain.model.PlaybackProgressAck
 import com.example.movieapp.domain.model.PlaybackSession
+import com.example.movieapp.domain.store.CurrentProfileStore
 import com.example.movieapp.domain.usecase.CreatePlaybackSessionUseCase
+import com.example.movieapp.domain.usecase.GetProfilesUseCase
 import com.example.movieapp.domain.usecase.RenewMediaAuthUseCase
 import com.example.movieapp.domain.usecase.SendHeartbeatUseCase
 import com.example.movieapp.domain.usecase.SendPlaybackEventUseCase
@@ -49,6 +51,10 @@ class PlayerViewModelTest {
     private val progressUseCase = mockk<SendProgressUseCase>()
     private val eventUseCase = mockk<SendPlaybackEventUseCase>()
     private val renewMediaAuthUseCase = mockk<RenewMediaAuthUseCase>()
+    private val currentProfileStore = mockk<CurrentProfileStore>(relaxed = true) {
+        every { currentProfileId } returns MutableStateFlow("550e8400-e29b-41d4-a716-446655440000")
+    }
+    private val getProfilesUseCase = mockk<GetProfilesUseCase>(relaxed = true)
 
     private lateinit var viewModel: PlayerViewModel
 
@@ -82,10 +88,10 @@ class PlayerViewModelTest {
 
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
-            heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase
+            heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
+            currentProfileStore, getProfilesUseCase
         )
-
-        viewModel.startPlayback("m1", "p1", "src1", "prof1")
+        viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()
 
         assertTrue(viewModel.uiState.value.showResumeDialog)
@@ -103,9 +109,10 @@ class PlayerViewModelTest {
 
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
-            heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase
+            heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
+            currentProfileStore, getProfilesUseCase
         )
-        viewModel.startPlayback("m1", "p1", "src1", "prof1")
+        viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()
 
         viewModel.finishSession(StopReason.NormalStop)
@@ -139,9 +146,10 @@ class PlayerViewModelTest {
 
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
-            heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase
+            heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
+            currentProfileStore, getProfilesUseCase
         )
-        viewModel.startPlayback("m1", "p1", "src1", "prof1")
+        viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()
 
         // Fast-forward 30 seconds for heartbeat loop

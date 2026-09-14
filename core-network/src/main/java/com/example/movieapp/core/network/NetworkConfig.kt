@@ -20,16 +20,16 @@ object NetworkConfig {
     /**
      * Placeholder for staging environment (HTTPS required).
      */
-    const val STAGING_BASE_URL = "https://staging.movieapp.com/"
+    const val STAGING_BASE_URL = "https://movie.tft5s.com/"
     
     /**
      * Placeholder for production environment (HTTPS required).
      */
-    const val PROD_BASE_URL = "https://api.movieapp.com/"
+    const val PROD_BASE_URL = "https://movie.tft5s.com/"
 
     /**
      * Active Base URL used by Retrofit clients.
      */
     val activeBaseUrl: String
-        get() = DEV_EMULATOR_BASE_URL
+        get() = PROD_BASE_URL
 }

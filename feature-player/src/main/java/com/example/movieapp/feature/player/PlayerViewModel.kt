@@ -9,7 +9,9 @@ import com.example.movieapp.core.player.PlayerManager
 import com.example.movieapp.core.player.PlayerState
 import com.example.movieapp.domain.model.MediaAuth
 import com.example.movieapp.domain.model.PlaybackSession
+import com.example.movieapp.domain.store.CurrentProfileStore
 import com.example.movieapp.domain.usecase.CreatePlaybackSessionUseCase
+import com.example.movieapp.domain.usecase.GetProfilesUseCase
 import com.example.movieapp.domain.usecase.RenewMediaAuthUseCase
 import com.example.movieapp.domain.usecase.SendHeartbeatUseCase
 import com.example.movieapp.domain.usecase.SendPlaybackEventUseCase
@@ -35,7 +37,9 @@ class PlayerViewModel @Inject constructor(
     private val heartbeatUseCase: SendHeartbeatUseCase,
     private val progressUseCase: SendProgressUseCase,
     private val eventUseCase: SendPlaybackEventUseCase,
-    private val renewMediaAuthUseCase: RenewMediaAuthUseCase
+    private val renewMediaAuthUseCase: RenewMediaAuthUseCase,
+    private val currentProfileStore: CurrentProfileStore,
+    private val getProfilesUseCase: GetProfilesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -70,7 +74,24 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null, canRetryManually = false) }
 
-            val payloadKey = "$movieId|$playableId|$sourceItemId|$profileId"
+            var resolvedProfileId = profileId
+            if (resolvedProfileId.isBlank() || resolvedProfileId == "active" || !isValidUuid(resolvedProfileId)) {
+                resolvedProfileId = currentProfileStore.currentProfileId.value ?: ""
+            }
+            if (resolvedProfileId.isBlank() || !isValidUuid(resolvedProfileId)) {
+                when (val profResult = getProfilesUseCase()) {
+                    is Result.Success -> {
+                        val firstProf = profResult.data.firstOrNull()
+                        if (firstProf != null) {
+                            resolvedProfileId = firstProf.id
+                            currentProfileStore.setProfileId(firstProf.id)
+                        }
+                    }
+                    else -> {}
+                }
+            }
+
+            val payloadKey = "$movieId|$playableId|$sourceItemId|$resolvedProfileId"
             val existingPayloadKey = savedStateHandle.get<String>("sessionPayloadKey")
             val idempotencyKey = if (existingPayloadKey == payloadKey) {
                 savedStateHandle.get<String>("sessionIdempotencyKey") ?: IdempotencyKeyGenerator.generate()
@@ -81,7 +102,7 @@ class PlayerViewModel @Inject constructor(
                 }
             }
 
-            when (val result = createSessionUseCase(profileId, movieId, playableId, sourceItemId, idempotencyKey)) {
+            when (val result = createSessionUseCase(resolvedProfileId, movieId, playableId, sourceItemId, idempotencyKey)) {
                 is Result.Success -> {
                     session = result.data
                     _uiState.update { it.copy(isLoading = false, session = result.data) }
@@ -101,6 +122,15 @@ class PlayerViewModel @Inject constructor(
                     handlePlaybackError(result)
                 }
             }
+        }
+    }
+
+    private fun isValidUuid(string: String): Boolean {
+        return try {
+            UUID.fromString(string)
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 

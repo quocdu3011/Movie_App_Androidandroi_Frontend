@@ -506,7 +506,7 @@ Tất cả route bên dưới yêu cầu role `admin` hoặc `content_manager`.
 |---|---|---|
 | `GET /admin/providers/kkphim/search?keyword=&page=` | keyword 1–100 ký tự | Dữ liệu tìm kiếm provider, không có URL playback. |
 | `POST /admin/providers/kkphim/import` | `{ slug, movieId? }` | `202`, `{ syncRunId, status: 'queued' }`. Không có `movieId` thì tạo movie nội bộ. |
-| `POST /admin/providers/kkphim/sync` | `{ mode?: 'discovery' | 'refresh', maxPages?: 1..3 }` | `202`, sync run queued. |
+| `POST /admin/providers/kkphim/sync` | `{ mode?: 'discovery' | 'refresh', maxPages?: 1..10000 }` | `202`, sync run queued. With `discovery`, use `maxPages: 10000` to scan every page currently reported by KKPhim; the worker stops at the provider total. Provider 429/5xx errors requeue the same checkpoint after `CATALOG_SYNC_RETRY_MS`. |
 | `GET /admin/providers/kkphim/sync-runs?page=&pageSize=` | — | `Page<SyncRun>`. |
 
 ```ts

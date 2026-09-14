@@ -66,6 +66,8 @@ fun MovieDetailScreen(
         viewModel.loadMovieDetail(movieId)
     }
 
+    val activeProfileId = uiState.profileId ?: profileId
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -133,7 +135,7 @@ fun MovieDetailScreen(
                         // Favorite Button on top right
                         IconButton(
                             onClick = { viewModel.toggleFavorite() },
-                            enabled = profileId != null,
+                            enabled = activeProfileId != null,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(16.dp)
@@ -153,7 +155,7 @@ fun MovieDetailScreen(
                                         movie.id,
                                         selectedPlayable!!.id,
                                         sourceItemId,
-                                        profileId
+                                        activeProfileId
                                     )
                                 },
                                 shape = CircleShape,

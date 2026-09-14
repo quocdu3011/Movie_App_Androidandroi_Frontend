@@ -12,6 +12,7 @@ data class MovieDetailUiState(
     val availableSources: List<SourceItem> = emptyList(),
     val selectedSourceItem: SourceItem? = null,
     val isFavorite: Boolean = false,
+    val profileId: String? = null,
     val errorMessage: String? = null,
     val requestId: String? = null
 )
