@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.UUID
@@ -19,7 +20,7 @@ class DeviceIdProvider(
     private val dataStore: DataStore<Preferences>
 ) {
     @Inject
-    constructor(context: Context) : this(context.deviceIdDataStore)
+    constructor(@ApplicationContext context: Context) : this(context.deviceIdDataStore)
 
     private val DEVICE_ID_KEY = stringPreferencesKey("device_id")
 

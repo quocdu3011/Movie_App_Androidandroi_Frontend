@@ -36,6 +36,9 @@ captures/
 
 # Local configuration files (contains local SDK paths, keys, secrets)
 local.properties
+.agents/
+scratch/
+
 
 # Signing files
 *.jks

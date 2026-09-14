@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,7 +14,7 @@ class EncryptedTokenStorage(
 ) : TokenStorage {
 
     @Inject
-    constructor(context: Context) : this(createEncryptedPreferences(context))
+    constructor(@ApplicationContext context: Context) : this(createEncryptedPreferences(context))
 
     @Volatile
     private var inMemoryAccessToken: String? = null

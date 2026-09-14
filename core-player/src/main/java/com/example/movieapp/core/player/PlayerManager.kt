@@ -11,6 +11,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import com.example.movieapp.core.network.di.MediaClient
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +31,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class PlayerManager @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     @param:MediaClient val mediaHttpClient: OkHttpClient
 ) {
     private var exoPlayer: ExoPlayer? = null

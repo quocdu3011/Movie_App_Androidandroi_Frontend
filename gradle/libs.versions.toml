@@ -1,5 +1,5 @@
 [versions]
-agp = "9.1.1"
+agp = "8.8.0"
 kotlin = "2.2.21"
 ksp = "2.2.21-2.0.4"
 hilt = "2.57.2"
@@ -25,7 +25,7 @@ kotlinxSerializationJson = "1.6.3"
 retrofitKotlinxSerializationConverter = "1.0.0"
 
 # Database
-room = "2.6.1"
+room = "2.7.2"
 
 # Media3 Player
 media3 = "1.4.1"
@@ -44,6 +44,7 @@ turbine = "1.1.0"
 [libraries]
 # AndroidX & Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
