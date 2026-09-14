@@ -149,7 +149,7 @@ class MovieDetailViewModel @Inject constructor(
         if (playableId == null) return emptyList()
         return detail.sources.filter { source ->
             source.playableId == playableId &&
-                    source.sourceStatus in listOf("available", "unknown") &&
+                    (source.sourceStatus in listOf("available", "unknown", "active") || source.sourceStatus.isBlank()) &&
                     !source.sourceItemId.isNullOrBlank()
         }
     }

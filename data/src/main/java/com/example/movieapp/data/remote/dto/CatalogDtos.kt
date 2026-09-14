@@ -12,22 +12,22 @@ data class MovieDto(
     val posterUrl: String? = null,
     val backdropUrl: String? = null,
     val releaseYear: Int? = null,
-    val type: String,
-    val contentKind: String,
-    val status: String,
-    val accessTier: String,
-    val isKidsSafe: Boolean,
+    val type: String = "movie",
+    val contentKind: String = "feature",
+    val status: String = "published",
+    val accessTier: String = "free",
+    val isKidsSafe: Boolean = false,
     val averageRating: Double = 0.0,
     val publishedAt: String? = null,
-    val version: String,
-    val createdAt: String,
-    val updatedAt: String
+    val version: String = "1",
+    val createdAt: String = "",
+    val updatedAt: String = ""
 )
 
 @Serializable
 data class GenreRefDto(
     val slug: String? = null,
-    val name: String,
+    val name: String = "",
     val id: String? = null
 )
 
@@ -35,18 +35,18 @@ data class GenreRefDto(
 data class CountryRefDto(
     val slug: String? = null,
     val isoCode: String? = null,
-    val name: String
+    val name: String = ""
 )
 
 @Serializable
 data class PlayableItemDto(
     val id: String,
-    val kind: String,
+    val kind: String = "episode",
     val seasonId: String? = null,
     val seasonNumber: Int? = null,
     val episodeNumber: Int? = null,
-    val label: String,
-    val sortOrder: Int,
+    val label: String = "",
+    val sortOrder: Int = 0,
     val durationSeconds: Int? = null,
     val archivedAt: String? = null
 )
@@ -54,9 +54,9 @@ data class PlayableItemDto(
 @Serializable
 data class SourceItemDto(
     val id: String,
-    val sourceType: String,
+    val sourceType: String = "embed",
     val provider: String? = null,
-    val sourceStatus: String,
+    val sourceStatus: String? = null,
     val sourceItemId: String? = null,
     val playableId: String? = null,
     val serverKey: String? = null,
@@ -73,16 +73,16 @@ data class MovieDetailDto(
     val posterUrl: String? = null,
     val backdropUrl: String? = null,
     val releaseYear: Int? = null,
-    val type: String,
-    val contentKind: String,
-    val status: String,
-    val accessTier: String,
-    val isKidsSafe: Boolean,
+    val type: String = "movie",
+    val contentKind: String = "feature",
+    val status: String = "published",
+    val accessTier: String = "free",
+    val isKidsSafe: Boolean = false,
     val averageRating: Double = 0.0,
     val publishedAt: String? = null,
-    val version: String,
-    val createdAt: String,
-    val updatedAt: String,
+    val version: String = "1",
+    val createdAt: String = "",
+    val updatedAt: String = "",
     val genres: List<GenreRefDto> = emptyList(),
     val countries: List<CountryRefDto> = emptyList(),
     val playableItems: List<PlayableItemDto> = emptyList(),
