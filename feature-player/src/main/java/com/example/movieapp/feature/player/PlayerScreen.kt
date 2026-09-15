@@ -64,6 +64,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -118,6 +121,42 @@ fun PlayerScreen(
                 WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
             }
         }
+    }
+
+    // App Lifecycle Background Pause & 90s Timeout Handling
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var pausedTimestamp by remember { mutableLongStateOf(0L) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP -> {
+                    viewModel.playerManager.pause()
+                    if (pausedTimestamp == 0L) {
+                        pausedTimestamp = System.currentTimeMillis()
+                    }
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    if (pausedTimestamp > 0L) {
+                        val elapsedMs = System.currentTimeMillis() - pausedTimestamp
+                        pausedTimestamp = 0L
+                        if (elapsedMs > 90_000L) {
+                            viewModel.finishSession(StopReason.NormalStop)
+                            onBackClick()
+                        }
+                    }
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.finishSession(StopReason.NormalStop) }
     }
 
     LaunchedEffect(movieId, playableId, sourceItemId, profileId) {

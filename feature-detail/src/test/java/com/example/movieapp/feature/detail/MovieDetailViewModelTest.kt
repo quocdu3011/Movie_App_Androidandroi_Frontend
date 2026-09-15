@@ -1,6 +1,7 @@
 package com.example.movieapp.feature.detail
 
 import com.example.movieapp.core.common.Result
+import com.example.movieapp.domain.model.HistoryItem
 import com.example.movieapp.domain.model.Movie
 import com.example.movieapp.domain.model.MovieDetail
 import com.example.movieapp.domain.model.PlayableItem
@@ -8,6 +9,7 @@ import com.example.movieapp.domain.model.SourceItem
 import com.example.movieapp.domain.store.CurrentProfileStore
 import com.example.movieapp.domain.usecase.GetFavoritesUseCase
 import com.example.movieapp.domain.usecase.GetMovieDetailUseCase
+import com.example.movieapp.domain.usecase.GetWatchHistoryUseCase
 import com.example.movieapp.domain.usecase.ToggleFavoriteUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -37,6 +39,7 @@ class MovieDetailViewModelTest {
     private val getMovieDetailUseCase = mockk<GetMovieDetailUseCase>()
     private val toggleFavoriteUseCase = mockk<ToggleFavoriteUseCase>()
     private val getFavoritesUseCase = mockk<GetFavoritesUseCase>()
+    private val getWatchHistoryUseCase = mockk<GetWatchHistoryUseCase>()
 
     private lateinit var viewModel: MovieDetailViewModel
 
@@ -44,6 +47,7 @@ class MovieDetailViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         coEvery { getFavoritesUseCase("profile-123") } returns Result.Success(emptyList())
+        coEvery { getWatchHistoryUseCase("profile-123") } returns Result.Success(emptyList())
     }
 
     @After
@@ -74,6 +78,7 @@ class MovieDetailViewModelTest {
             getMovieDetailUseCase,
             toggleFavoriteUseCase,
             getFavoritesUseCase,
+            getWatchHistoryUseCase,
             currentProfileStore
         )
         viewModel.loadMovieDetail("m1")
@@ -83,6 +88,45 @@ class MovieDetailViewModelTest {
         assertEquals(1, state.availableSources.size)
         assertEquals("s1", state.availableSources[0].id)
         assertEquals("src-item-123", state.selectedSourceItem?.sourceItemId)
+    }
+
+    @Test
+    fun `loadMovieDetail detects watch history and sets continuePlayableItem`() = runTest {
+        val movie = Movie(
+            id = "m1", title = "Series 1", type = "series", contentKind = "film",
+            status = "published", accessTier = "free", isKidsSafe = true, averageRating = 8.0,
+            version = "1", createdAt = "", updatedAt = ""
+        )
+        val playables = listOf(
+            PlayableItem(id = "p1", kind = "episode", seasonNumber = 1, episodeNumber = 1, label = "Tập 1", sortOrder = 1),
+            PlayableItem(id = "p2", kind = "episode", seasonNumber = 1, episodeNumber = 2, label = "Tập 2", sortOrder = 2)
+        )
+        val sources = listOf(
+            SourceItem(id = "s1", sourceType = "owned", sourceStatus = "available", sourceItemId = "src-item-1", playableId = "p1"),
+            SourceItem(id = "s2", sourceType = "owned", sourceStatus = "available", sourceItemId = "src-item-2", playableId = "p2")
+        )
+        val detail = MovieDetail(movie = movie, playableItems = playables, sources = sources)
+
+        val historyItem = HistoryItem(
+            movieId = "m1", playableId = "p2", sourceItemId = "src-item-2", positionSeconds = 300, durationSeconds = 1200, updatedAt = "2026-01-01T00:00:00Z"
+        )
+        coEvery { getWatchHistoryUseCase("profile-123") } returns Result.Success(listOf(historyItem))
+        coEvery { getMovieDetailUseCase("m1", "profile-123") } returns Result.Success(detail)
+
+        viewModel = MovieDetailViewModel(
+            getMovieDetailUseCase,
+            toggleFavoriteUseCase,
+            getFavoritesUseCase,
+            getWatchHistoryUseCase,
+            currentProfileStore
+        )
+        viewModel.loadMovieDetail("m1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNotNull(state.continuePlayableItem)
+        assertEquals("p2", state.continuePlayableItem?.id)
+        assertEquals("src-item-2", state.continueSourceItem?.sourceItemId)
     }
 
     @Test
@@ -100,6 +144,7 @@ class MovieDetailViewModelTest {
             getMovieDetailUseCase,
             toggleFavoriteUseCase,
             getFavoritesUseCase,
+            getWatchHistoryUseCase,
             currentProfileStore
         )
         viewModel.loadMovieDetail("m1")

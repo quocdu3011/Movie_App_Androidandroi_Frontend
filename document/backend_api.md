@@ -486,7 +486,8 @@ Tất cả route bên dưới yêu cầu role `admin` hoặc `content_manager`.
 
 | Method / path | Body chính | Mục đích |
 |---|---|---|
-| `GET /admin/movies?page=&pageSize=&status=` | — | `Page<Movie>` gồm draft/published/archived. |
+| `GET /admin/movies?page=&pageSize=&status=&q=` | `q` tối đa 100 ký tự, tìm không phân biệt hoa/thường trong `title` và `originTitle`; `status` optional. | `Page<Movie>` gồm draft/published/archived. |
+| `GET /admin/movies/:movieId` | — | Chi tiết admin của movie ở mọi trạng thái, gồm genres, countries, playable items và source/source item metadata; không trả URL playback. |
 | `POST /admin/movies` | `CreateMovie` | Tạo movie/series owned ở trạng thái draft. |
 | `PATCH /admin/movies/:movieId` | Các field mutable của Movie | Sửa metadata. |
 | `POST /admin/movies/:movieId/publish` | — | Publish khi có ít nhất một source item available. |

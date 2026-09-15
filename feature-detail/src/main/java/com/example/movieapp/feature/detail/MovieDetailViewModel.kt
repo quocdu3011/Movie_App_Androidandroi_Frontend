@@ -3,12 +3,14 @@ package com.example.movieapp.feature.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.movieapp.core.common.Result
+import com.example.movieapp.domain.model.HistoryItem
 import com.example.movieapp.domain.model.MovieDetail
 import com.example.movieapp.domain.model.PlayableItem
 import com.example.movieapp.domain.model.SourceItem
 import com.example.movieapp.domain.store.CurrentProfileStore
 import com.example.movieapp.domain.usecase.GetFavoritesUseCase
 import com.example.movieapp.domain.usecase.GetMovieDetailUseCase
+import com.example.movieapp.domain.usecase.GetWatchHistoryUseCase
 import com.example.movieapp.domain.usecase.ToggleFavoriteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +25,7 @@ class MovieDetailViewModel @Inject constructor(
     private val getMovieDetailUseCase: GetMovieDetailUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val getFavoritesUseCase: GetFavoritesUseCase,
+    private val getWatchHistoryUseCase: GetWatchHistoryUseCase,
     private val currentProfileStore: CurrentProfileStore
 ) : ViewModel() {
 
@@ -49,6 +52,16 @@ class MovieDetailViewModel @Inject constructor(
                 }
             }
 
+            var lastHistory: HistoryItem? = null
+            if (profileId != null) {
+                when (val historyResult = getWatchHistoryUseCase(profileId)) {
+                    is Result.Success -> {
+                        lastHistory = historyResult.data.firstOrNull { it.movieId == movieId }
+                    }
+                    else -> {}
+                }
+            }
+
             when (val result = getMovieDetailUseCase(movieId, profileId)) {
                 is Result.Success -> {
                     val detail = result.data
@@ -67,6 +80,17 @@ class MovieDetailViewModel @Inject constructor(
                         detail.playableItems.firstOrNull()
                     }
 
+                    var continuePlayable: PlayableItem? = null
+                    var continueSource: SourceItem? = null
+                    if (lastHistory != null) {
+                        continuePlayable = detail.playableItems.firstOrNull { it.id == lastHistory.playableId }
+                        if (continuePlayable != null) {
+                            val availableForContinue = computeAvailableSources(detail, continuePlayable.id)
+                            continueSource = availableForContinue.firstOrNull { it.id == lastHistory.sourceItemId }
+                                ?: availableForContinue.firstOrNull()
+                        }
+                    }
+
                     val available = computeAvailableSources(detail, defaultPlayable?.id)
                     val defaultSource = available.firstOrNull()
 
@@ -77,7 +101,10 @@ class MovieDetailViewModel @Inject constructor(
                             selectedSeasonNumber = defaultSeason,
                             selectedPlayableItem = defaultPlayable,
                             availableSources = available,
-                            selectedSourceItem = defaultSource
+                            selectedSourceItem = defaultSource,
+                            lastHistoryItem = lastHistory,
+                            continuePlayableItem = continuePlayable,
+                            continueSourceItem = continueSource
                         )
                     }
                 }

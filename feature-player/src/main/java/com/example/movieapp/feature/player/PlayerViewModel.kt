@@ -16,7 +16,9 @@ import com.example.movieapp.domain.usecase.RenewMediaAuthUseCase
 import com.example.movieapp.domain.usecase.SendHeartbeatUseCase
 import com.example.movieapp.domain.usecase.SendPlaybackEventUseCase
 import com.example.movieapp.domain.usecase.SendProgressUseCase
+import com.example.movieapp.feature.player.di.PlaybackCompletionScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +44,8 @@ class PlayerViewModel @Inject constructor(
     private val renewMediaAuthUseCase: RenewMediaAuthUseCase,
     private val currentProfileStore: CurrentProfileStore,
     private val getProfilesUseCase: GetProfilesUseCase,
-    private val getMovieDetailUseCase: GetMovieDetailUseCase
+    private val getMovieDetailUseCase: GetMovieDetailUseCase,
+    @PlaybackCompletionScope private val playbackCompletionScope: CoroutineScope
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -265,25 +268,31 @@ class PlayerViewModel @Inject constructor(
         mediaAuthRenewJob?.cancel()
         playerStateJob?.cancel()
 
-        viewModelScope.launch {
-            val s = session
+        updatePlayedMillis()
+        val s = session
+        val pos = playerManager.currentPositionSeconds()
+        val dur = playerManager.durationSeconds()
+        val finalSeq = (++seq).toString()
+        val playedSeconds = (playedMillis / 1000L).toInt()
+        val eventId = UUID.randomUUID().toString()
+        playerManager.pause()
+        playerManager.release()
+
+        // This scope survives ViewModel.onCleared(), which otherwise cancels the terminal request.
+        playbackCompletionScope.launch {
             if (s != null) {
-                val pos = playerManager.currentPositionSeconds()
-                val dur = playerManager.durationSeconds()
-
-                // 1. Await final progress
-                progressUseCase(s.sessionId, seq = (++seq).toString(), positionSeconds = pos, durationSeconds = dur)
-
-                // 2. Send terminal event
-                eventUseCase(
-                    sessionId = s.sessionId,
-                    eventId = UUID.randomUUID().toString(),
-                    type = if (reason.isFailure) "failed" else "stopped",
-                    playedSeconds = (playedMillis / 1000L).toInt(),
-                    reasonCode = reason.code
-                )
+                // Final progress is best effort; a progress failure must not prevent lease release.
+                runCatching { progressUseCase(s.sessionId, seq = finalSeq, positionSeconds = pos, durationSeconds = dur) }
+                runCatching {
+                    eventUseCase(
+                        sessionId = s.sessionId,
+                        eventId = eventId,
+                        type = if (reason.isFailure) "failed" else "stopped",
+                        playedSeconds = playedSeconds,
+                        reasonCode = reason.code
+                    )
+                }
             }
-            playerManager.release()
         }
     }
 
@@ -360,7 +369,7 @@ class PlayerViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         finishSession(StopReason.NormalStop)
+        super.onCleared()
     }
 }

@@ -1,6 +1,7 @@
 package com.example.movieapp.feature.player
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelStore
 import com.example.movieapp.core.common.Result
 import com.example.movieapp.core.player.PlayerManager
 import com.example.movieapp.core.player.PlayerState
@@ -18,11 +19,15 @@ import com.example.movieapp.domain.usecase.SendHeartbeatUseCase
 import com.example.movieapp.domain.usecase.SendPlaybackEventUseCase
 import com.example.movieapp.domain.usecase.SendProgressUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -39,6 +44,7 @@ import org.junit.Test
 class PlayerViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
+    private lateinit var playbackCompletionScope: CoroutineScope
     private val savedStateHandle = SavedStateHandle()
     private val playerStateFlow = MutableStateFlow<PlayerState>(PlayerState.Idle)
     private val playerManager = mockk<PlayerManager>(relaxed = true) {
@@ -63,6 +69,7 @@ class PlayerViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        playbackCompletionScope = CoroutineScope(SupervisorJob() + testDispatcher)
         coEvery { progressUseCase(any(), any(), any(), any()) } returns Result.Success(
             PlaybackProgressAck(sessionId = "s1", accepted = true, applied = true)
         )
@@ -76,6 +83,7 @@ class PlayerViewModelTest {
 
     @After
     fun tearDown() {
+        playbackCompletionScope.cancel()
         Dispatchers.resetMain()
     }
 
@@ -91,7 +99,7 @@ class PlayerViewModelTest {
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
             heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
-            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase
+            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase, playbackCompletionScope
         )
         viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()
@@ -112,7 +120,7 @@ class PlayerViewModelTest {
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
             heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
-            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase
+            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase, playbackCompletionScope
         )
         viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()
@@ -149,7 +157,7 @@ class PlayerViewModelTest {
         viewModel = PlayerViewModel(
             savedStateHandle, playerManager, createSessionUseCase,
             heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
-            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase
+            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase, playbackCompletionScope
         )
         viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
         testDispatcher.scheduler.runCurrent()
@@ -159,5 +167,55 @@ class PlayerViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         assertTrue(viewModel.terminalSent)
+    }
+
+    @Test
+    fun `ViewModel clearing still sends stopped event`() = runTest {
+        val session = PlaybackSession(
+            sessionId = "sess-1", playableId = "p1", sourceItemId = "src1", sourceType = "third_party",
+            protocol = "hls", playbackUrl = "http://stream.m3u8", leaseExpiresAt = "2026-12-31T23:59:59Z",
+            resumePositionSeconds = 0, resumeNeedsConfirmation = false, urlExpiresAt = ""
+        )
+        coEvery { createSessionUseCase(any(), any(), any(), any(), any()) } returns Result.Success(session)
+        viewModel = PlayerViewModel(
+            savedStateHandle, playerManager, createSessionUseCase,
+            heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
+            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase, playbackCompletionScope
+        )
+        val store = ViewModelStore().apply { put("player", viewModel) }
+
+        viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
+        testDispatcher.scheduler.runCurrent()
+        store.clear()
+        testDispatcher.scheduler.runCurrent()
+
+        assertTrue(viewModel.terminalSent)
+        coVerifyOrder {
+            progressUseCase("sess-1", seq = "1", positionSeconds = 10, durationSeconds = 100)
+            eventUseCase("sess-1", any(), type = "stopped", playedSeconds = any(), reasonCode = null)
+        }
+    }
+
+    @Test
+    fun `progress failure does not prevent terminal event`() = runTest {
+        val session = PlaybackSession(
+            sessionId = "sess-1", playableId = "p1", sourceItemId = "src1", sourceType = "third_party",
+            protocol = "hls", playbackUrl = "http://stream.m3u8", leaseExpiresAt = "2026-12-31T23:59:59Z",
+            resumePositionSeconds = 0, resumeNeedsConfirmation = false, urlExpiresAt = ""
+        )
+        coEvery { createSessionUseCase(any(), any(), any(), any(), any()) } returns Result.Success(session)
+        coEvery { progressUseCase("sess-1", any(), any(), any()) } throws IllegalStateException("offline")
+        viewModel = PlayerViewModel(
+            savedStateHandle, playerManager, createSessionUseCase,
+            heartbeatUseCase, progressUseCase, eventUseCase, renewMediaAuthUseCase,
+            currentProfileStore, getProfilesUseCase, getMovieDetailUseCase, playbackCompletionScope
+        )
+
+        viewModel.startPlayback("m1", "p1", "src1", "550e8400-e29b-41d4-a716-446655440000")
+        testDispatcher.scheduler.runCurrent()
+        viewModel.finishSession(StopReason.NormalStop)
+        testDispatcher.scheduler.runCurrent()
+
+        coVerify { eventUseCase.invoke("sess-1", any(), type = "stopped", playedSeconds = any(), reasonCode = null) }
     }
 }

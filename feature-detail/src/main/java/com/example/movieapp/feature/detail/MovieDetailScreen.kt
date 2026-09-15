@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -235,6 +237,41 @@ fun MovieDetailScreen(
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isPremium) SecondaryGold else PrimaryCoral
+                                )
+                            }
+                        }
+
+                        // Continue Watching Button (If history exists)
+                        val continuePlayable = uiState.continuePlayableItem
+                        val continueSource = uiState.continueSourceItem
+                        val continueSourceId = continueSource?.sourceItemId ?: sourceItemId
+                        if (continuePlayable != null && continueSourceId != null) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Button(
+                                onClick = {
+                                    onPlayClick(
+                                        movie.id,
+                                        continuePlayable.id,
+                                        continueSourceId,
+                                        activeProfileId
+                                    )
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryCoral),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                val epLabel = continuePlayable.label.ifBlank { "Tập ${continuePlayable.episodeNumber ?: continuePlayable.sortOrder}" }
+                                Text(
+                                    text = "Xem tiếp $epLabel",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
                             }
                         }
